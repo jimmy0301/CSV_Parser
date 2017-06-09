@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 		return ERR_SYS_MEM;
 	}
 
-	if (csv_content_parse(file_content, file_size, header, csv_data)) {
+	if (csv_content_parse(file_content, file_size, header, header_cnt, csv_data)) {
 		conf_free(&conf);
 		free(file_content);
 		file_content = NULL;
