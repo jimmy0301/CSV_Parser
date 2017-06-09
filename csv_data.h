@@ -18,6 +18,7 @@ typedef struct csv_field
 }csv_field_t;
 
 extern char* csv_file_read(char *file_name, size_t *file_size);
-extern int csv_content_parse(char *csv_content, size_t content_size, header_t *header, size_t header_cnt, csv_field_t *csv_data[CSV_ROW_SIZE_MAX]);
+extern int csv_content_parse(char *csv_content, size_t content_size, header_t *header, size_t header_cnt,
+									  char *err_file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX]);
 
 #endif

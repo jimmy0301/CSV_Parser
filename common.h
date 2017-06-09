@@ -5,10 +5,13 @@
 #define PATH_MAX 4096
 #define BUF_SIZE_MAX 8192
 
-#define TRUE	1
-#define FALSE	0
+typedef unsigned char u_char;
 
-typedef unsigned int bool;
+#ifndef bool
+   #define bool   u_char
+   #define true   (1 == 1)
+   #define false  (!true)
+#endif
 
 
 extern int remove_header_space(char *str);

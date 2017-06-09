@@ -55,32 +55,41 @@ csv_file_read(char *file_name, size_t *file_size)
 	return file_content;
 }
 
+/* doesn't remove tail space */
 int
 csv_content_parse(char *csv_content, size_t content_size, header_t *header,
-						size_t header_cnt, csv_field_t *csv_data[CSV_ROW_SIZE_MAX])
+						size_t header_cnt, char *err_file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX])
 {
-	char *end_ptr = NULL, *field_start = NULL, *ptr = NULL;
+	char *end_ptr = NULL, *field_start = NULL, *ptr = NULL, *orig_field_start = NULL;
+	char *row_start = NULL;
 	size_t field_cnt = 0;
 	size_t row_data = 0;
 	size_t dquote_cnt = 0;
+	size_t field_val_len = 0;
 	char field_val[FIELD_VAL_SIZE_MAX];
-	bool has_content_dquote = FALSE;
-	bool is_valid_row_data = TRUE;
+	bool is_valid_row_data = true;
+	FILE *fp_err = NULL;
 
-	if (csv_content == NULL || header == NULL || csv_data == NULL)
+	if (csv_content == NULL || header == NULL ||
+		 err_file_name == NULL || csv_data == NULL)
 		return ERR_PARAM_NULL;
-	if (csv_content[0] == '\0')
+	if (csv_content[0] == '\0' || err_file_name[0] == '\0')
 		return ERR_PARAM_INVAL;
+
+	if ((fp_err = fopen(err_file_name, "w")) == NULL)
+		return ERR_IO_OPEN;
 
 	field_start = csv_content;
 	end_ptr = csv_content + (content_size - 1);
 
+	row_start = field_start;
 	while (field_start < end_ptr) {
 		memset(field_val, 0, FIELD_VAL_SIZE_MAX);
 		while (isspace(*field_start))
 			field_start++;
-		ptr = field_start + 1;
 		if (*field_start == '"') {
+			ptr = field_start + 1;
+			orig_field_start = field_start + 1;
 			dquote_cnt++;
 			while (dquote_cnt != 0) {
 				if (*ptr == '"') {
@@ -93,33 +102,24 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 								ptr = ptr + 2;
 							else {
 								ptr = end_ptr;
-								if ((ptr - field_start - 1) < FIELD_VAL_SIZE_MAX) {
-									strncpy(field_val, field_start, ptr - field_start - 1);
-									printf("%s\n", field_val);
-								}
+								field_val_len = ptr - field_start - 1;
 								field_start = ptr;
 								field_cnt++;
 								break;
 							}
 						}
+						// "123", or "123"\n
 						else if ((*(ptr + 1)) == ',' || (*(ptr + 1)) == '\n') {
 							/* field_value = (field_start+1) len = ptr-field_start-2 */
 							/* is_valid_field */
 							dquote_cnt = 0;
-							if ((ptr - field_start) == 1) {
-								
-							}
-							else {
+							if (field_val_len  > 1) {
 								field_start = field_start + 1;
-								if ((ptr - field_start) < FIELD_VAL_SIZE_MAX) {
-									strncpy(field_val, field_start, ptr - field_start);
-									printf("%s\n", field_val);
-								}
-								else {
-									strncpy(field_val, field_start, FIELD_VAL_SIZE_MAX - 1);
-								}
 							}
+							field_val_len = ptr - field_start;
 							if ((ptr + 2) <= end_ptr) {
+								if (*(ptr + 1) == '\n')
+									row_start = ptr + 2;
 								ptr = ptr + 2;
 							}
 							else {
@@ -134,14 +134,15 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 							if ((ptr + 2) <= end_ptr) {
 								//"123"\r\n
 								if (*(ptr + 2) == '\n') {
-									field_start = field_start + 1;
-									if ((ptr - field_start - 1) < FIELD_VAL_SIZE_MAX) {
-										strncpy(field_val, field_start, ptr - field_start - 1);
-										printf("%s\n", field_val);
+									field_val_len = ptr - orig_field_start;
+									if ((ptr + 3) <= end_ptr) {
+										ptr = ptr + 3;
 									}
 									else {
-										strncpy(field_val, field_start, FIELD_VAL_SIZE_MAX - 1);
+										ptr = end_ptr;
 									}
+									field_start = ptr;
+									row_start = ptr;
 								}
 								else {
 									ptr = ptr + 2;
@@ -149,37 +150,37 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 							}
 							else {
 								ptr = end_ptr;
-								field_start = field_start + 1;
-								if ((ptr - field_start + 1) < FIELD_VAL_SIZE_MAX) {
-									strncpy(field_val, field_start, ptr - field_start + 1);
-									printf("%s\n", field_val);
-								}
-								else {
-									strncpy(field_val, field_start, FIELD_VAL_SIZE_MAX - 1);
-								}
+								field_val_len = ptr - orig_field_start + 1;
 								field_start = ptr;
-								is_valid_row_data = FALSE;
+								is_valid_row_data = false;
 								field_cnt++;
 								break;
 							}
 						}
 						else {
-							//"123"123
-							printf("===yes===\n");
-							if ((ptr + 1) <= end_ptr) {
-								is_valid_row_data = FALSE;
-								ptr = ptr + 1;
-								dquote_cnt = 1;
+							//TODO: invalid "123"123 go \n and output
+							while (((ptr + 1) <= end_ptr) && *ptr != '\n') {
+								ptr++;
+							}
+
+							fwrite(row_start, ptr - row_start + 1, sizeof(char), fp_err);
+
+							if (*ptr == '\n') {
+								if ((ptr + 1) <= end_ptr) {
+									field_start = ptr + 1;
+									row_start = field_start;
+								}
+								else {
+									field_start = ptr;
+								}
 							}
 							else {
-								ptr = end_ptr;
-								field_start = end_ptr;
-								field_cnt++;
-								break;
+								field_start = ptr;
 							}
+							break;
 						}
-					}
-				}
+					}// end else if (((ptr + 1)) <= end_ptr)
+				}//end if (*ptr == '"')
 				else {
 					if ((ptr + 1) <= end_ptr) {
 						ptr = ptr + 1;
@@ -190,11 +191,84 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 						break;
 					}
 				}
+			}//end while(dquote_cnt != 0)
+			if (field_val_len < FIELD_VAL_SIZE_MAX) {
+				strncpy(field_val, orig_field_start, field_val_len);
 			}
+			else {
+				strncpy(field_val, orig_field_start, FIELD_VAL_SIZE_MAX - 1);
+			}
+			printf("field_val =%s\n", field_val);
+		}//end field_start == '"'
+		//,123,456\n
+		else if (*field_start == ',') {
+			row_start = field_start;
+			if ((field_start + 1) <= end_ptr) {
+				field_start = field_start + 1;
+			}
+			//add 空字串 ""
+			field_cnt++;
 		}
-		is_valid_row_data = TRUE;
+		/* field_start != '"' && field_start != ',' */
+		else {
+			printf("====start====\n");
+			printf("field_start =%s\n", field_start);
+			printf("====end======\n");
+			ptr = field_start;
+			orig_field_start = field_start;
+			while (*ptr != ',' && *ptr != '\n') {
+				if ((ptr + 1) <= end_ptr)
+					ptr++;
+				else {
+					break;
+				}
+			}
+			if (*ptr == ',') {
+				if (ptr == end_ptr) {
+					field_val_len = ptr - orig_field_start + 1;
+					field_start = ptr;
+				}
+				else {
+					field_val_len = ptr - orig_field_start;
+					field_start = ptr + 1;
+				}
+				field_cnt++;
+			}
+			else if (*ptr == '\n') {
+				if (*(ptr - 1) == '\r') {
+					field_val_len = (ptr - 1) - orig_field_start;
+				}
+				else {
+					field_val_len = ptr - orig_field_start;
+				}
+
+				if (ptr == end_ptr)
+					field_start = ptr;
+				else
+					field_start = ptr + 1;
+
+				field_cnt++;
+			}
+			else {
+				field_val_len = ptr - orig_field_start;
+				field_start = ptr;
+			}
+			if (field_val_len < FIELD_VAL_SIZE_MAX) {
+				strncpy(field_val, orig_field_start, field_val_len);
+			}
+			else {
+				strncpy(field_val, orig_field_start, FIELD_VAL_SIZE_MAX - 1);
+			}
+			printf("field_val =%s\n", field_val);
+		}
+		is_valid_row_data = true;
 		field_cnt = 0;
 		ptr = ptr + 1;
+	}
+
+	if (fp_err != NULL) {
+		fclose(fp_err);
+		fp_err = NULL;
 	}
 
 	return SUCCESS;

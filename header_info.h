@@ -1,6 +1,8 @@
 #ifndef __HEADER_INFO_H
 #define __HEADER_INFO_H
 
+#include <stddef.h>
+
 
 #define HEADER_TYPE_INTEGER_STR	"INTEGER"
 #define HEADER_TYPE_BOOL_STR		"BOOL"
