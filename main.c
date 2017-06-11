@@ -4,6 +4,7 @@
 #include "header_info.h"
 #include "conf.h"
 #include "csv_data.h"
+#include "csv_sort.h"
 
 
 static void
@@ -19,7 +20,9 @@ int main(int argc, char *argv[])
 	size_t header_cnt = 0;
 	size_t file_size = 0;
 	size_t csv_data_size = 0;
+	size_t sort_order_cnt = 0;
 	char *file_content = NULL;
+	int sort_order_list[CSV_FIELD_SIZE_MAX];
 	conf_t conf;
 	header_t header[HEADER_INFO_CNT_MAX];
 	csv_field_t **csv_data;
@@ -92,25 +95,40 @@ int main(int argc, char *argv[])
 
 	if (i < CSV_ROW_SIZE_MAX) {
 		rc = ERR_SYS_MEM;
-		printf("Failed to malloc csv field data (%d)\n", rc);
+		printf("Failed to malloc csv field data (%d).\n", rc);
 		goto end;
 	}
 
-	if ((rc = csv_data_init(csv_data)) != SUCCESS) {
+	/*if ((rc = csv_data_init(csv_data)) != SUCCESS) {
 		printf("Failed to init csv_data (%d).\n", rc);
 		goto end;
-	}
+	}*/
 
 	/* parse csv file */
 	if ((rc = csv_content_parse(file_content, file_size, header,
 								 header_cnt, conf.error_file, csv_data, &csv_data_size)) != SUCCESS) {
-		printf("Failed to parse csv file (%d)\n", rc);
+		printf("Failed to parse csv file (%d).\n", rc);
 		rc = ERR_DATA_INVAL;
 		goto end;
 	}
 
-	printf("field_val =%d\n", csv_data[0][0].integer);
-	printf("field_val =%s\n", csv_data[1][2].output_str);
+	if ((rc = sort_header_parse(conf.sort_headers, header, header_cnt,
+										sort_order_list, &sort_order_cnt))) {
+		printf("Failed to parse sort header (%d).\n", rc);
+		rc = ERR_DATA_INVAL;
+		goto end;
+	}
+
+	for (i = 0; i < sort_order_cnt; i++) 
+		printf("sort_order = %d\n", sort_order_list[i]);
+
+	if (sort_by_field(csv_data, csv_data_size, header_cnt, sort_order_list,
+							sort_order_cnt, conf.sort_order) != SUCCESS) {
+		printf("Failed to sort csv_data\n");
+		goto end;
+	}
+
+	csv_data_print(csv_data, csv_data_size, header_cnt);
 
 end:
 	if (file_content != NULL) {
@@ -129,6 +147,8 @@ end:
 		free(csv_data);
 		csv_data = NULL;
 	}
+
 	conf_free(&conf);
+
 	return rc;
 }

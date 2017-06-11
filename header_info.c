@@ -62,7 +62,7 @@ header_parse(char *header_str, header_t *header, size_t *header_cnt)
 		ptr2 = ptr2 + 1;
 		if ((ptr3 = strchr(ptr, ' ')) != NULL) {
 			*ptr3 = '\0';
-			header[(*header_cnt)].header_index = (*header_cnt) + 1;
+			header[(*header_cnt)].header_index = (*header_cnt);
 			snprintf(header[(*header_cnt)].header_name, HEADER_NAME_SIZE_MAX, "%s", ptr);
 			ptr3 = ptr3 + 1;
 			header[(*header_cnt)].type = get_header_type(ptr3);
@@ -88,7 +88,7 @@ header_parse(char *header_str, header_t *header, size_t *header_cnt)
 
 	if ((ptr3 = strchr(ptr, ' ')) != NULL) {
 		*ptr3 = '\0';
-		header[(*header_cnt)].header_index = (*header_cnt) + 1;
+		header[(*header_cnt)].header_index = (*header_cnt);
 		snprintf(header[(*header_cnt)].header_name, HEADER_NAME_SIZE_MAX, "%s", ptr);
 		ptr3 = ptr3 + 1;
 		header[(*header_cnt)].type = get_header_type(ptr3);

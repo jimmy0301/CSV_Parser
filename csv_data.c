@@ -588,7 +588,7 @@ csv_field_varchar_set(csv_field_t **csv_field, char *field_val, size_t varchar_s
 				(**csv_field).output_str[0] = '"';
 				add_head_space((**csv_field).output_str + 1, space_size);
 				snprintf((**csv_field).output_str + space_size + 1,
-						CSV_FIELD_VARCHAR_SIZE_MAX - space_size + 2, "%s", field_val);
+						CSV_FIELD_VARCHAR_SIZE_MAX - space_size + 2, "%s\"", field_val);
 			}
 		}
 		else {
@@ -638,6 +638,22 @@ csv_field_datetime_set(csv_field_t **csv_field, char *field_val, bool has_dquote
 	}
 	else {
 		snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3, "%s", field_val);
+	}
+
+	return SUCCESS;
+}
+
+int csv_data_print(csv_field_t *csv_data[CSV_ROW_SIZE_MAX], size_t row_size, size_t column_size)
+{
+	int i, j;
+	for (i = 0; i < row_size; i++) {
+		for (j = 0; j < column_size; j++) {
+			if (j != (column_size - 1))
+				printf("%s,", csv_data[i][j].output_str);
+			else {
+				printf("%s\n", csv_data[i][j].output_str);
+			}
+		}
 	}
 
 	return SUCCESS;
