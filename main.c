@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
 	int rc = SUCCESS, i;
 	size_t header_cnt = 0;
 	size_t file_size = 0;
+	size_t csv_data_size = 0;
 	char *file_content = NULL;
 	conf_t conf;
 	header_t header[HEADER_INFO_CNT_MAX];
@@ -95,13 +96,21 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
+	if ((rc = csv_data_init(csv_data)) != SUCCESS) {
+		printf("Failed to init csv_data (%d).\n", rc);
+		goto end;
+	}
+
 	/* parse csv file */
-	if ((rc =csv_content_parse(file_content, file_size, header,
-								 header_cnt, conf.error_file, csv_data)) != SUCCESS) {
+	if ((rc = csv_content_parse(file_content, file_size, header,
+								 header_cnt, conf.error_file, csv_data, &csv_data_size)) != SUCCESS) {
 		printf("Failed to parse csv file (%d)\n", rc);
 		rc = ERR_DATA_INVAL;
 		goto end;
 	}
+
+	printf("field_val =%d\n", csv_data[0][0].integer);
+	printf("field_val =%s\n", csv_data[1][2].output_str);
 
 end:
 	if (file_content != NULL) {

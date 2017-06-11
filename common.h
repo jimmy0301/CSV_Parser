@@ -14,7 +14,8 @@ typedef unsigned char u_char;
 #endif
 
 
-extern int remove_header_space(char *str);
+extern int add_head_space(char *str, size_t space_size);
 extern int remove_tail_space(char *str);
+extern int remove_dquote(char *src, char *dest);
 
 #endif
