@@ -5,11 +5,10 @@
 #include "common.h"
 
 #define CSV_FIELD_SIZE_MAX	20
-#define CSV_ROW_SIZE_MAX	10000
+#define CSV_ROW_SIZE_MAX	1000
 
 #define CSV_FIELD_CHAR_SIZE_MAX 		128
 #define CSV_FIELD_VARCHAR_SIZE_MAX	1024
-#define CSV_FIELD_DATETIME_SIZE_MAX	20
 
 
 typedef struct csv_field

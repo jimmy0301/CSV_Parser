@@ -8,6 +8,9 @@
 #define SORT_ORDER_ASC 	0
 #define SORT_ORDER_DESC	1
 
+#define SORT_ORDER_LIST_SIZE_MAX 1000
+
+
 
 extern int sort_header_parse(char *sort_header, header_t *header, size_t header_cnt,
 									  int *sort_order_list, size_t *sort_order_list_cnt);
