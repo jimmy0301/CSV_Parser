@@ -42,9 +42,6 @@ int main(int argc, char *argv[])
 		printf("Failed to parse config file. (%d)\n", rc);
 		return rc;
 	}
-	//conf_dump(&conf);
-
-	//printf("=======\n");
 
 	/* Parse header info */
 	if ((rc = header_init(header, HEADER_INFO_CNT_MAX)) != SUCCESS) {
@@ -59,10 +56,6 @@ int main(int argc, char *argv[])
 		return rc;
 	}
 
-	//header_dump(header, header_cnt);
-
-	//printf("=======\n");
-
 	if ((file_content = csv_file_read(conf.input_file, &file_size)) == NULL) {
 		printf("Failed to get csv file content\n");
 		rc = ERR_DATA_INVAL;
@@ -72,9 +65,13 @@ int main(int argc, char *argv[])
 
 	if (file_size == 0) {
 		printf("The csv file is empty.\n");
+		conf_free(&conf);
+		if (file_content != NULL) {
+			free(file_content);
+			file_content = NULL;
+		}
 		return SUCCESS;
 	}
-	//printf("file_content = %s\n", file_content);
 
 	csv_data = (csv_field_t **)malloc(sizeof(csv_field_t*)*CSV_ROW_SIZE_MAX);
 	if (csv_data == NULL) {
@@ -99,11 +96,7 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
-	/*if ((rc = csv_data_init(csv_data)) != SUCCESS) {
-		printf("Failed to init csv_data (%d).\n", rc);
-		goto end;
-	}*/
-
+	printf("header_cnt = %zd\n", header_cnt);
 	/* parse csv file */
 	if ((rc = csv_content_parse(file_content, file_size, header,
 								 header_cnt, conf.error_file, csv_data, &csv_data_size)) != SUCCESS) {
@@ -112,6 +105,7 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
+	printf("data_cnt = %zd\n", csv_data_size);
 	if ((rc = sort_header_parse(conf.sort_headers, header, header_cnt,
 										sort_order_list, &sort_order_cnt))) {
 		printf("Failed to parse sort header (%d).\n", rc);
@@ -119,16 +113,16 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
-	for (i = 0; i < sort_order_cnt; i++) 
-		printf("sort_order = %d\n", sort_order_list[i]);
-
-	if (sort_by_field(csv_data, csv_data_size, header_cnt, sort_order_list,
-							sort_order_cnt, conf.sort_order) != SUCCESS) {
+	if ((rc = sort_by_field(csv_data, csv_data_size, header_cnt, sort_order_list,
+							sort_order_cnt, conf.sort_order)) != SUCCESS) {
 		printf("Failed to sort csv_data\n");
 		goto end;
 	}
 
-	csv_data_print(csv_data, csv_data_size, header_cnt);
+	if ((rc = csv_data_write_file(conf.output_file, csv_data, csv_data_size, header_cnt)) != SUCCESS) {
+		printf("Failed write sorting result file\n");
+		goto end;
+	}
 
 end:
 	if (file_content != NULL) {

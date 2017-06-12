@@ -19,7 +19,7 @@ conf_init(conf_t *conf)
 
 	conf->headers = NULL;
 	conf->sort_headers = NULL;
-	conf->sort_order = SORT_ORDER_ASC;
+	conf->sort_order = CSV_SORT_ORDER_ASC;
 
 	return SUCCESS;
 }
@@ -73,6 +73,8 @@ conf_parse(char *file_name, conf_t *conf)
 
 	memset(buf, 0, BUF_SIZE_MAX);
 	while (fgets(buf, BUF_SIZE_MAX, fp) != NULL) {
+		if (*buf == '\0' || *buf == '\n' || *buf == '\r')
+			continue;
 		ptr = &buf[strlen(buf) - 1];
 		while (*ptr == '\n' || *ptr == '\r') {
 			*ptr = '\0';
@@ -111,10 +113,10 @@ conf_parse(char *file_name, conf_t *conf)
 				conf->sort_headers = strdup(ptr2);
 			else if (strcmp(ptr, CSV_SORT_ORDER_STR) == 0) {
 				if (strcmp(ptr2, CSV_SORT_ASC_STR) == 0) {
-					conf->sort_order = SORT_ORDER_ASC;
+					conf->sort_order = CSV_SORT_ORDER_ASC;
 				}
 				else {
-					conf->sort_order = SORT_ORDER_DESC;
+					conf->sort_order = CSV_SORT_ORDER_DESC;
 				}
 			}
 			else {

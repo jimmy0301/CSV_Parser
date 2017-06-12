@@ -68,28 +68,67 @@ sort_header_parse(char *sort_header, header_t *header, size_t header_cnt,
 int sort_by_field(csv_field_t *csv_data[CSV_ROW_SIZE_MAX], size_t csv_data_size, size_t header_cnt,
 						int *sort_order_list, size_t sort_order_cnt, int sort_order)
 {
-	int i = 0, j, rc;
+	int i = 0, j;
+	int *stack = NULL;
+	int top = -1;
+	int l = 0;
+	int h = csv_data_size - 1;
+	int pivot;
+	csv_field_t *pivot_data = NULL;
 	csv_field_t *tmp_field = NULL;
 
+	stack = (int *)malloc(sizeof(int)*(h - l + 1));
+	if (stack == NULL)
+		return ERR_SYS_MEM;
 
-	for (i = csv_data_size - 1; i > 0; i--) {
-		for (j = 0; j < i; j++) {
-			if ((rc = compare(csv_data[j], csv_data[j + 1], sort_order_list, sort_order_cnt, sort_order)) > 0) {
+	stack[++top] = l;
+	stack[++top] = h;
+
+	while (top >= 0) {
+		h = stack[top--];
+		l = stack[top--];
+
+		pivot_data = csv_data[h];
+		i = l -1;
+
+		for (j = l; j <= h -1; j++) {
+			if (compare(csv_data[j], pivot_data, sort_order_list, sort_order_cnt, sort_order) <= 0) {
+				i++;
 				tmp_field = csv_data[j];
-				csv_data[j] = csv_data[j + 1];
-				csv_data[j + 1] = tmp_field;
+				csv_data[j] = csv_data[i];
+				csv_data[i] = tmp_field;
 			}
-			printf("rc = %d\n", rc);
 		}
+		tmp_field = csv_data[i + 1];
+		csv_data[i + 1] = csv_data[h];
+		csv_data[h] = tmp_field;
+		pivot = i + 1;
+
+		if (pivot - 1 > l) {
+			stack[++top] = l;
+			stack[++top] = pivot - 1;
+		}
+
+		if (pivot + 1 < h) {
+			stack[++top] = pivot + 1;
+			stack[++top] = h;
+		}
+	}
+
+	if (stack != NULL) {
+		free(stack);
+		stack = NULL;
 	}
 
 	return SUCCESS;
 }
 
+
+
 static int
 compare(csv_field_t *entry1, csv_field_t *entry2, int *sort_order_list, size_t sort_order_cnt, int sort_order)
 {
-	int i = 0, rc = -1;
+	int i = 0, rc = 0;
 	while (i < sort_order_cnt && rc == 0) {
 		if (entry1[sort_order_list[i]].type == INTEGER) {
 			rc = compare_integer(entry1[sort_order_list[i]].integer, entry2[sort_order_list[i]].integer);
@@ -98,7 +137,7 @@ compare(csv_field_t *entry1, csv_field_t *entry2, int *sort_order_list, size_t s
 			rc = compare_bool(entry1[sort_order_list[i]].boolean, entry2[sort_order_list[i]].boolean);
 		}
 		else if (entry1[sort_order_list[i]].type == DOUBLE) {
-			rc = compare_double(entry1[sort_order_list[i]].boolean, entry2[sort_order_list[i]].boolean);
+			rc = compare_double(entry1[sort_order_list[i]].double_num, entry2[sort_order_list[i]].double_num);
 		}
 		else if (entry1[sort_order_list[i]].type == CHAR) {
 			rc = compare_char(entry1[sort_order_list[i]].char_str, entry2[sort_order_list[i]].char_str);
@@ -112,7 +151,10 @@ compare(csv_field_t *entry1, csv_field_t *entry2, int *sort_order_list, size_t s
 		i++;
 	}
 
-	printf("in compare rc = %d\n", rc);
+	if (sort_order == SORT_ORDER_DESC) {
+		rc = -rc;
+	}
+
 	return rc;
 }
 
@@ -143,7 +185,7 @@ compare_double(double a, double b)
 {
 	if (a == b)
 		return 0;
-	else if (a == true && b == false)
+	else if (a > b)
 		return 1;
 	else
 		return -1;

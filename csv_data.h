@@ -31,5 +31,6 @@ extern int csv_content_parse(char *csv_content, size_t content_size, header_t *h
 									  char *err_file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX],
 									  size_t *csv_data_size);
 extern int csv_data_print(csv_field_t *csv_data[CSV_ROW_SIZE_MAX], size_t row_size, size_t column_size);
+extern int csv_data_write_file(char *file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX], size_t row_size, size_t column_size);
 
 #endif

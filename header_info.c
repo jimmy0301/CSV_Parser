@@ -69,10 +69,14 @@ header_parse(char *header_str, header_t *header, size_t *header_cnt)
 			if (header[(*header_cnt)].type == CHAR) {
 				ptr3 = ptr3 + strlen(HEADER_TYPE_CHAR_STR) + 1;
 				header[(*header_cnt)].size = atoi(ptr3);
+				if (header[(*header_cnt)].size > HEADER_CHAR_SIZE_MAX)
+					return ERR_DATA_INVAL;
 			}
 			else if (header[(*header_cnt)].type == VARCHAR) {
 				ptr3 = ptr3 + strlen(HEADER_TYPE_VARCHAR_STR) + 1;
 				header[(*header_cnt)].size = atoi(ptr3);
+				if (header[(*header_cnt)].size > HEADER_VARCHAR_SIZE_MAX)
+					return ERR_DATA_INVAL;
 			}
 
 			while (isspace(*ptr2))
@@ -95,10 +99,14 @@ header_parse(char *header_str, header_t *header, size_t *header_cnt)
 		if (header[(*header_cnt)].type == CHAR) {
 			ptr3 = ptr3 + strlen(HEADER_TYPE_CHAR_STR) + 1;
 			header[(*header_cnt)].size = atoi(ptr3);
+			if (header[(*header_cnt)].size > HEADER_CHAR_SIZE_MAX)
+				return ERR_DATA_INVAL;
 		}
 		else if (header[(*header_cnt)].type == VARCHAR) {
 			ptr3 = ptr3 + strlen(HEADER_TYPE_VARCHAR_STR) + 1;
 			header[(*header_cnt)].size = atoi(ptr3);
+			if (header[(*header_cnt)].size > HEADER_VARCHAR_SIZE_MAX)
+				return ERR_DATA_INVAL;
 		}
 		(*header_cnt)++;
 	}

@@ -24,8 +24,8 @@
 
 #define FORMULA_CNT_MAX	3
 
-#define SORT_ORDER_ASC 	0
-#define SORT_ORDER_DESC	1
+#define CSV_SORT_ORDER_ASC 	0
+#define CSV_SORT_ORDER_DESC	1
 
 
 typedef struct conf_content
