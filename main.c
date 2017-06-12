@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	size_t csv_data_size = 0;
 	size_t sort_order_cnt = 0;
 	char *file_content = NULL;
-	int sort_order_list[CSV_FIELD_SIZE_MAX];
+	int sort_order_list[SORT_ORDER_LIST_SIZE_MAX];
 	conf_t conf;
 	header_t header[HEADER_INFO_CNT_MAX];
 	csv_field_t **csv_data;
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 		return SUCCESS;
 	}
 
-	csv_data = (csv_field_t **)malloc(sizeof(csv_field_t*)*CSV_ROW_SIZE_MAX);
+	csv_data = (csv_field_t **)calloc(sizeof(csv_field_t *), CSV_ROW_SIZE_MAX);
 	if (csv_data == NULL) {
 		rc = ERR_SYS_MEM;
 		printf("Failed to malloc csv data (%d).\n", rc);
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	}
 
 	for (i = 0; i < CSV_ROW_SIZE_MAX; i++) {
-		csv_data[i] = (csv_field_t *)malloc(sizeof(csv_field_t)*CSV_FIELD_SIZE_MAX);
+		csv_data[i] = (csv_field_t *)calloc(sizeof(csv_field_t), CSV_FIELD_SIZE_MAX);
 		if (csv_data[i] == NULL) {
 			break;
 		}
@@ -96,7 +96,6 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
-	printf("header_cnt = %zd\n", header_cnt);
 	/* parse csv file */
 	if ((rc = csv_content_parse(file_content, file_size, header,
 								 header_cnt, conf.error_file, csv_data, &csv_data_size)) != SUCCESS) {
@@ -105,7 +104,6 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
-	printf("data_cnt = %zd\n", csv_data_size);
 	if ((rc = sort_header_parse(conf.sort_headers, header, header_cnt,
 										sort_order_list, &sort_order_cnt))) {
 		printf("Failed to parse sort header (%d).\n", rc);
@@ -120,7 +118,7 @@ int main(int argc, char *argv[])
 	}
 
 	if ((rc = csv_data_write_file(conf.output_file, csv_data, csv_data_size, header_cnt)) != SUCCESS) {
-		printf("Failed write sorting result file\n");
+		printf("Failed write sorting result file (%d).\n", rc);
 		goto end;
 	}
 

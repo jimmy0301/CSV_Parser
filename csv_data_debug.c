@@ -56,10 +56,11 @@ csv_file_read(char *file_name, size_t *file_size)
 	*file_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
+	printf("file size =%zd\n", *file_size);
 	if (*file_size == 0)
 		return NULL;
 
-	file_content = (char *)calloc(sizeof(char), (*file_size + 1));
+	file_content = (char *)malloc(sizeof(char)*(*file_size + 1));
 	if (file_content == NULL) {
 		fclose(fp);
 		fp = NULL;
@@ -164,26 +165,21 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 								orig_field_start = field_start;
 								field_val_len = ptr - field_start + 1;
 							}
-							/*if (*(ptr + 1) == '\n') {
-								is_end_row = true;
-								if ((ptr + 2) < end_ptr)
-									field_start = ptr + 2;
-								else
-									field_start = end_ptr;
+
+							if ((ptr + 2) < end_ptr) {
+								field_start = ptr + 2;
+								if (*(ptr + 1) == '\n') {
+									is_end_row = true;
+								}
 							}
+							// ptr + 2 >= end_ptr
 							else {
-								field_start = ptr + 1;
-							}*/
-
-							//break;
-
-							/*else {
 								//"123",\0 or "123",\n\0
 								if (*(ptr + 1) == ',') {
 									is_empty_str = true;
-									need_check = false;
+									/*need_check = false;
 									is_valid_field_data = false;
-									is_valid_row_data = false;
+									is_valid_row_data = false;*/
 								}
 
 								if (*(ptr+1) == '\n') {
@@ -192,7 +188,7 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 
 								field_start = end_ptr;
 								break;
-							}*/
+							}
 						}
 						// "123"\rXXX
 						else if ((*(ptr + 1)) == '\r') {
@@ -352,18 +348,21 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 			}
 		}
 
-		printf("field_start =%s\n", field_start);
-		printf("field_cnt = %zd\n", field_cnt);
-
+		//printf("field_start =%s\n", field_start);
+		//printf("field_cnt = %zd\n", field_cnt);
+		/*printf("need_check = %d\n", need_check);
+		printf("is_valid_row_data = %d\n", is_valid_row_data);
+		printf("is_valid_field_data = %d\n", is_valid_field_data);
+		printf("header_cnt = %zd\n", header_cnt);*/
 		if (need_check) {
-			printf("=======has_check=====\n");
+			//printf("=======has_check=====\n");
 			if (field_cnt == header_cnt) {
 				is_valid_row_data = false;
 				is_valid_field_data = false;
 			}
 			else {
-				printf("======check_val=======\n");
-				printf("is_empty_str = %d\n", is_empty_str);
+				//printf("======check_val=======\n");
+				//printf("is_empty_str = %d\n", is_empty_str);
 				if (is_empty_str) {
 					field_val[0] = '\0';
 				}
@@ -386,11 +385,15 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 		}
 
 		if (is_valid_field_data) {
+			//printf("valid_field\n");
 			csv_field_set(&csv_data[row_data][field_cnt], &header[field_cnt], field_val, has_dquote, is_empty_str);
+			//printf("field_val = %s\n", field_val);
 			field_cnt++;
 		}
 
+		//printf("is_end_row = %d\n", is_end_row);
 		if (!is_valid_row_data || !is_valid_field_data) {
+			//printf("in error\n");
 			while (((ptr + 1) <= end_ptr) && *ptr != '\n') {
 				ptr++;
 			}
@@ -420,14 +423,14 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 		}
 
 		if (is_end_row) {
-			if (is_valid_row_data)
-				row_data++;
 			field_cnt = 0;
 			is_valid_row_data = true;
 			is_end_row = false;
 			row_start = field_start;
+			row_data++;
 		}
 
+		//printf("==========\n");
 		dquote_cnt = 0;
 		has_dquote = false;
 		is_empty_str = false;
@@ -571,7 +574,7 @@ csv_field_char_set(csv_field_t **csv_field, char *field_val, size_t char_size, b
 				(**csv_field).char_str[0] = '\0';
 			}
 			else {
-				space_size = char_size - strlen(field_val) - 1;
+				space_size = char_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).char_str) + space_size);
 				add_head_space((**csv_field).char_str, space_size);
 				(**csv_field).output_str[0] = '"';
@@ -586,7 +589,7 @@ csv_field_char_set(csv_field_t **csv_field, char *field_val, size_t char_size, b
 				(**csv_field).char_str[0] = '\0';
 			}
 			else {
-				space_size = char_size - strlen(field_val) - 1;
+				space_size = char_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).char_str) + space_size);
 				add_head_space((**csv_field).char_str, space_size);
 				add_head_space((**csv_field).output_str, space_size);
@@ -624,7 +627,7 @@ csv_field_varchar_set(csv_field_t **csv_field, char *field_val, size_t varchar_s
 				(**csv_field).varchar_str[0] = '\0';
 			}
 			else {
-				space_size = varchar_size - strlen(field_val) - 1;
+				space_size = varchar_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).varchar_str) + space_size);
 				add_head_space((**csv_field).varchar_str, space_size);
 				(**csv_field).output_str[0] = '"';
@@ -639,7 +642,7 @@ csv_field_varchar_set(csv_field_t **csv_field, char *field_val, size_t varchar_s
 				(**csv_field).varchar_str[0] = '\0';
 			}
 			else {
-				space_size = varchar_size - strlen(field_val) - 1;
+				space_size = varchar_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).varchar_str) + space_size);
 				add_head_space((**csv_field).varchar_str, space_size);
 				add_head_space((**csv_field).output_str, space_size);
@@ -708,7 +711,7 @@ int
 csv_data_write_file(char *file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX], size_t row_size, size_t column_size)
 {
 	FILE *fp = NULL;
-	int i, j;
+	int i, j,z;
 
 	if (file_name == NULL || csv_data == NULL)
 		return ERR_PARAM_NULL;
@@ -720,8 +723,10 @@ csv_data_write_file(char *file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX], si
 	if (fp == NULL)
 		return ERR_IO_OPEN;
 
+//	for (z = 0; z < 1000; z++) {
 	for (i = 0; i < row_size; i++) {
 		for (j = 0; j < column_size; j++) {
+			printf("output_field = %s\n", csv_data[i][j].output_str);
 			if (j != (column_size - 1)) {
 				if (csv_data[i][j].output_str[0] == '\0') {
 					fprintf(fp, ",");
@@ -735,6 +740,7 @@ csv_data_write_file(char *file_name, csv_field_t *csv_data[CSV_ROW_SIZE_MAX], si
 			}
 		}
 	}
+//	}
 
 	if (fp != NULL) {
 		fclose(fp);

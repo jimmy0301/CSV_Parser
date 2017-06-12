@@ -42,19 +42,25 @@ sort_header_parse(char *sort_header, header_t *header, size_t header_cnt,
 		*ptr2 = '\0';
 		for (i = 0; i < header_cnt; i++) {
 			if (strcmp(ptr, header[i].header_name) == 0) {
-				sort_order_list[list_idx] = header[i].header_index;
-				list_idx++;
+				if (list_idx < SORT_ORDER_LIST_SIZE_MAX ) {
+					sort_order_list[list_idx] = header[i].header_index;
+					list_idx++;
+				}
 				break;
 			}
 		}
 		ptr = ptr2 + 1;
+		if (list_idx >= SORT_ORDER_LIST_SIZE_MAX)
+			break;
 	}
 
-	if (*ptr != '\0') {
+	if (*ptr != '\0' && list_idx < SORT_ORDER_LIST_SIZE_MAX) {
 		for (i = 0; i < header_cnt; i++) {
 			if (strcmp(ptr, header[i].header_name) == 0) {
-				sort_order_list[list_idx] = header[i].header_index;
-				list_idx++;
+				if (list_idx < SORT_ORDER_LIST_SIZE_MAX) {
+					sort_order_list[list_idx] = header[i].header_index;
+					list_idx++;
+				}
 				break;
 			}
 		}
