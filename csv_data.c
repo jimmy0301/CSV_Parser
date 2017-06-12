@@ -352,18 +352,12 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 			}
 		}
 
-		printf("field_start =%s\n", field_start);
-		printf("field_cnt = %zd\n", field_cnt);
-
 		if (need_check) {
-			printf("=======has_check=====\n");
 			if (field_cnt == header_cnt) {
 				is_valid_row_data = false;
 				is_valid_field_data = false;
 			}
 			else {
-				printf("======check_val=======\n");
-				printf("is_empty_str = %d\n", is_empty_str);
 				if (is_empty_str) {
 					field_val[0] = '\0';
 				}
@@ -420,6 +414,7 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 		}
 
 		if (is_end_row) {
+			printf("row_data = %zd\n", row_data);
 			if (is_valid_row_data)
 				row_data++;
 			field_cnt = 0;
@@ -555,7 +550,7 @@ csv_field_char_set(csv_field_t **csv_field, char *field_val, size_t char_size, b
 	if (*csv_field == NULL || field_val == NULL)
 		return ERR_PARAM_NULL;
 
-	if (strlen(field_val) == (char_size - 1)) {
+	if (strlen(field_val) == (char_size)) {
 		remove_dquote(field_val, (**csv_field).char_str);
 		if (has_dquote) {
 			snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3 , "\"%s\"", field_val);
@@ -564,14 +559,14 @@ csv_field_char_set(csv_field_t **csv_field, char *field_val, size_t char_size, b
 			snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3, "%s", field_val);
 		}
 	}
-	else if (strlen(field_val) < (char_size - 1)) {
+	else if (strlen(field_val) < (char_size)) {
 		if (has_dquote) {
 			if (is_empty_str) {
 				snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3, "\"\"");
 				(**csv_field).char_str[0] = '\0';
 			}
 			else {
-				space_size = char_size - strlen(field_val) - 1;
+				space_size = char_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).char_str) + space_size);
 				add_head_space((**csv_field).char_str, space_size);
 				(**csv_field).output_str[0] = '"';
@@ -586,7 +581,7 @@ csv_field_char_set(csv_field_t **csv_field, char *field_val, size_t char_size, b
 				(**csv_field).char_str[0] = '\0';
 			}
 			else {
-				space_size = char_size - strlen(field_val) - 1;
+				space_size = char_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).char_str) + space_size);
 				add_head_space((**csv_field).char_str, space_size);
 				add_head_space((**csv_field).output_str, space_size);
@@ -608,7 +603,7 @@ csv_field_varchar_set(csv_field_t **csv_field, char *field_val, size_t varchar_s
 	if (*csv_field == NULL || field_val == NULL)
 		return ERR_PARAM_NULL;
 
-	if (strlen(field_val) == (varchar_size - 1)) {
+	if (strlen(field_val) == (varchar_size)) {
 		remove_dquote(field_val, (**csv_field).varchar_str);
 		if (has_dquote) {
 			snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3 , "\"%s\"", field_val);
@@ -617,14 +612,14 @@ csv_field_varchar_set(csv_field_t **csv_field, char *field_val, size_t varchar_s
 			snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3, "%s", field_val);
 		}
 	}
-	else if (strlen(field_val) < (varchar_size - 1)) {
+	else if (strlen(field_val) < (varchar_size)) {
 		if (has_dquote) {
 			if (is_empty_str) {
 				snprintf((**csv_field).output_str, CSV_FIELD_VARCHAR_SIZE_MAX + 3, "\"\"");
 				(**csv_field).varchar_str[0] = '\0';
 			}
 			else {
-				space_size = varchar_size - strlen(field_val) - 1;
+				space_size = varchar_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).varchar_str) + space_size);
 				add_head_space((**csv_field).varchar_str, space_size);
 				(**csv_field).output_str[0] = '"';
@@ -639,7 +634,7 @@ csv_field_varchar_set(csv_field_t **csv_field, char *field_val, size_t varchar_s
 				(**csv_field).varchar_str[0] = '\0';
 			}
 			else {
-				space_size = varchar_size - strlen(field_val) - 1;
+				space_size = varchar_size - strlen(field_val);
 				remove_dquote(field_val, ((**csv_field).varchar_str) + space_size);
 				add_head_space((**csv_field).varchar_str, space_size);
 				add_head_space((**csv_field).output_str, space_size);

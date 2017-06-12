@@ -104,6 +104,11 @@ int main(int argc, char *argv[])
 		goto end;
 	}
 
+	if (csv_data_size <= 0) {
+		printf("There is no data to sort\n");
+		return SUCCESS;
+	}
+
 	if ((rc = sort_header_parse(conf.sort_headers, header, header_cnt,
 										sort_order_list, &sort_order_cnt))) {
 		printf("Failed to parse sort header (%d).\n", rc);

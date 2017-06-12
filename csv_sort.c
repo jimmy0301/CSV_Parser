@@ -83,6 +83,16 @@ int sort_by_field(csv_field_t *csv_data[CSV_ROW_SIZE_MAX], size_t csv_data_size,
 	csv_field_t *pivot_data = NULL;
 	csv_field_t *tmp_field = NULL;
 
+	if (sort_order_list == NULL) {
+		return ERR_PARAM_NULL;
+	}
+
+	if (csv_data_size <= 0 || header_cnt <= 0 || sort_order_cnt <= 0)
+		return ERR_PARAM_INVAL;
+
+	if ((h - l + 1) <= 0)
+		return ERR_DATA_INVAL;
+
 	stack = (int *)malloc(sizeof(int)*(h - l + 1));
 	if (stack == NULL)
 		return ERR_SYS_MEM;

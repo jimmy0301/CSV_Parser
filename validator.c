@@ -90,8 +90,8 @@ is_valid_char(char *str, size_t size)
 	if (str == NULL)
 		return false;
 
-	if (strlen(str) >= size ||
-		 strlen(str) >= VALID_CHAR_SIZE_MAX)
+	if (strlen(str) > size ||
+		 strlen(str) > VALID_CHAR_SIZE_MAX)
 		return false;
 
 	return true;
@@ -103,8 +103,8 @@ is_valid_varchar(char *str, size_t size)
 	if (str == NULL)
 		return false;
 
-	if (strlen(str) >= size ||
-		 strlen(str) >= VALID_VARCHAR_SIZE_MAX)
+	if (strlen(str) > size ||
+		 strlen(str) > VALID_VARCHAR_SIZE_MAX)
 		return false;
 
 	return true;
