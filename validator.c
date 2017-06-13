@@ -37,7 +37,6 @@ is_valid_field(char *str, header_type type, size_t size)
 static bool
 is_valid_integer(char *str)
 {
-	printf("in integer, str=%s\n", str);
 	if (*str == '\0' || str == NULL)
 		return false;
 

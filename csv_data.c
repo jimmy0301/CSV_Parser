@@ -44,7 +44,6 @@ csv_file_read(char *file_name, size_t *file_size)
 	FILE *fp = NULL;
 	char *file_content = NULL;
 
-	printf("file_name = %s\n", file_name);
 	if (file_name == NULL || file_size == NULL)
 		return NULL;
 
@@ -149,8 +148,8 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 								break;
 							}
 						}
-						// "123", or "123"\n, or "",
-						else if ((*(ptr + 1)) == ',' || (*(ptr + 1)) == '\n') {
+						// "123", or "123"\n or "",
+						else if ((*(ptr + 1)) == ',') {
 							/* field_value = (field_start+1) len = ptr-field_start-2 */
 							/* is_valid_field */
 							dquote_cnt = 0;
@@ -161,38 +160,42 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 							}
 							else {
 								is_empty_str = true;
-								orig_field_start = field_start;
 								field_val_len = ptr - field_start + 1;
 							}
-							/*if (*(ptr + 1) == '\n') {
-								is_end_row = true;
-								if ((ptr + 2) < end_ptr)
+							orig_field_start = field_start;
+							if ((ptr + 2) <= end_ptr) {
+								if (*(ptr + 2) != '\n') {
 									field_start = ptr + 2;
-								else
-									field_start = end_ptr;
+								}
+								else {
+									field_start = ptr + 1;
+								}
 							}
 							else {
-								field_start = ptr + 1;
-							}*/
-
-							//break;
-
-							/*else {
-								//"123",\0 or "123",\n\0
-								if (*(ptr + 1) == ',') {
-									is_empty_str = true;
-									need_check = false;
-									is_valid_field_data = false;
-									is_valid_row_data = false;
-								}
-
-								if (*(ptr+1) == '\n') {
-									is_end_row = true;
-								}
-
 								field_start = end_ptr;
-								break;
-							}*/
+							}
+							break;
+						}
+						//"123"\n
+						else if ((*(ptr + 1)) == '\n') {
+							dquote_cnt = 0;
+							is_end_row = true;
+							field_val_len = ptr - field_start;
+							if (field_val_len > 1) {
+								field_start = field_start + 1;
+								field_val_len = ptr - field_start;
+							}
+							else {
+								is_empty_str = true;
+								field_val_len = ptr - field_start + 1;
+							}
+							orig_field_start = field_start;
+							if ((ptr + 2) <= end_ptr) {
+								field_start = ptr + 2;
+							}
+							else {
+								field_start = end_ptr;
+							}
 						}
 						// "123"\rXXX
 						else if ((*(ptr + 1)) == '\r') {
@@ -272,13 +275,18 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 				}
 				if ((ptr + 1) <= end_ptr) {
 					if (*(ptr + 1) == ',') {
+						field_start = ptr + 1;
+						is_empty_str = true;
+					}
+					else if (*(ptr + 1) == '\n') {
+						is_end_row = true;
+						is_empty_str = true;
 						if ((ptr + 2) <= end_ptr) {
 							field_start = ptr + 2;
 						}
 						else {
 							field_start = end_ptr;
 						}
-						is_empty_str = true;
 					}
 					else {
 						field_start = ptr + 1;
@@ -294,9 +302,16 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 		}
 		/* field_start != '"' && field_start != ',' */
 		else if (*field_start == '\n') {
+			if (*(field_start - 1) == ',') {
+				is_empty_str = true;
+			}
 			if ((field_start + 1) <= end_ptr) {
 				field_start = field_start + 1;
 			}
+			else {
+				field_start = end_ptr;
+			}
+			continue;
 		}
 		else {
 			ptr = field_start;
@@ -311,9 +326,6 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 			if (*ptr == ',') {
 				if ((ptr + 1) < end_ptr) {
 					if (*(ptr + 1) == '\n') {
-						need_check = false;
-						is_valid_field_data = false;
-						is_valid_row_data = false;
 						field_start = ptr + 2;
 					}
 					else {
@@ -321,9 +333,6 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 					}
 				}
 				else if ((ptr + 1) == end_ptr){
-					need_check = false;
-					is_valid_field_data = false;
-					is_valid_row_data = false;
 					field_start = end_ptr;
 				}
 				else {
@@ -414,7 +423,6 @@ csv_content_parse(char *csv_content, size_t content_size, header_t *header,
 		}
 
 		if (is_end_row) {
-			printf("row_data = %zd\n", row_data);
 			if (is_valid_row_data)
 				row_data++;
 			field_cnt = 0;
